@@ -22,7 +22,7 @@
     "classnames": "1.2.1",
     "coffeestack": "^1.1",
     "color": "^0.7.3",
-    "electron": "1.4.3",
+    "electron": "1.4.5",
     "electron-compile": "bengotow/electron-compile#4952b24b6d4c6a34f9b6b56e79ca360d1131cea3",
     "electron-compilers": "nylas/electron-compilers#59c4a98205efec0143c7c5c0bb2d11864ea91465",
     "electron-spellchecker": "0.2.15",
