@@ -34,7 +34,7 @@ function npm(cmd, options) {
   });
 }
 
-function installProResources() {
+function installPrivateResources() {
   console.log("\n-- Linking Nylas submodule resources --")
 
   const fs = require('fs-plus');
@@ -70,4 +70,4 @@ npm('install', {cwd: 'build'})
 .then(() => npm('dedupe', {cwd: path.join('apm', 'node_modules', 'npm'), env: 'apm'}))
 .then(() => npm('install', {cwd: '.', env: 'electron'}))
 .then(() => npm('dedupe', {cwd: '.', env: 'electron'}))
-.then(() => installProResources())
+.then(() => installPrivateResources())

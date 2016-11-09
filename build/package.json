@@ -21,6 +21,7 @@
     "grunt-electron-installer": "2.1.0",
     "grunt-lesslint": "0.13.0",
     "minidump": "~0.8",
+    "glob": "7.1.1",
     "request": "^2.64",
     "s3": "^4.3",
     "temp": "~0.8.1",

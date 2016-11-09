@@ -4,7 +4,11 @@ const packager = require('electron-packager');
 const path = require('path');
 const tmpdir = path.resolve(require('os').tmpdir(), 'nylas-build');
 const fs = require('fs-plus');
-const compile = require('electron-compile');
+const coffeereact = require('coffee-react');
+const glob = require('glob');
+const babel = require('babel-core');
+
+const babelOptions = require("../../static/babelrc");
 
 module.exports = (grunt) => {
   function runCopyAPM(buildPath, electronVersion, platform, arch, callback) {
@@ -61,28 +65,44 @@ module.exports = (grunt) => {
     callback();
   }
 
-  function runElectronCompile(buildPath, electronVersion, platform, arch, callback) {
-    console.log(" -- Running electron-compile. For extended debug info, run with DEBUG=electron-compile:*")
+  function runTranspilers(buildPath, electronVersion, platform, arch, callback) {
+    console.log(" -- Running babel and coffeescript transpilers")
 
-    const cachePath = path.join(buildPath, '.cache');
-    try {
-      fs.mkdirSync(cachePath);
-    } catch (err) {
-      //
-    }
+    grunt.config('source:coffeescript').forEach(pattern => {
+      glob.sync(pattern, {cwd: buildPath, absolute: true}).forEach((coffeepath) => {
+        const outPath = coffeepath.replace(path.extname(coffeepath), '.js');
+        const res = coffeereact.compile(grunt.file.read(coffeepath), {
+          bare: false,
+          join: false,
+          separator: grunt.util.normalizelf(grunt.util.linefeed),
 
-    const host = compile.createCompilerHostFromProjectRootSync(buildPath, cachePath)
-
-    host.compileAll(buildPath, (filepath) => {
-      const relativePath = filepath.replace(buildPath).replace('undefined/', '/');
-      return relativePath.startsWith('/src') || relativePath.startsWith('/internal_packages') || relativePath.startsWith('/static');
-    })
-    .then(() => {
-      host.saveConfiguration().then(callback)
-    })
-    .catch((err) => {
-      console.error(err);
+          sourceMap: true,
+          sourceRoot: '/',
+          generatedFile: path.basename(outPath),
+          sourceFiles: [path.relative(buildPath, coffeepath)],
+        });
+        grunt.file.write(outPath, `${res.js}\n//# sourceMappingURL=${path.basename(outPath)}.map\n`);
+        grunt.file.write(`${outPath}.map`, res.v3SourceMap);
+        fs.unlinkSync(coffeepath);
+      });
     });
+
+    grunt.config('source:es6').forEach(pattern => {
+      glob.sync(pattern, {cwd: buildPath, absolute: true}).forEach((es6Path) => {
+        const outPath = es6Path.replace(path.extname(es6Path), '.js');
+        const res = babel.transformFileSync(es6Path, Object.assign(babelOptions, {
+          sourceMaps: true,
+          sourceRoot: '/',
+          sourceMapTarget: path.relative(buildPath, outPath),
+          sourceFileName: path.relative(buildPath, es6Path),
+        }));
+        grunt.file.write(outPath, `${res.code}\n//# sourceMappingURL=${path.basename(outPath)}.map\n`);
+        grunt.file.write(`${outPath}.map`, JSON.stringify(res.map));
+        fs.unlinkSync(es6Path);
+      });
+    });
+
+    callback();
   }
 
   const platform = grunt.option('platform');
@@ -187,7 +207,7 @@ module.exports = (grunt) => {
         runCopyPlatformSpecificResources,
         runCopyAPM,
         runCopySymlinkedPackages,
-        runElectronCompile,
+        runTranspilers,
       ],
     },
   })

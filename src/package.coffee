@@ -7,6 +7,7 @@ EmitterMixin = require('emissary').Emitter
 {Emitter, CompositeDisposable} = require 'event-kit'
 Q = require 'q'
 
+ModuleCache = require './module-cache'
 
 TaskRegistry = require('./task-registry').default
 DatabaseObjectRegistry = require('./database-object-registry').default
@@ -77,6 +78,7 @@ class Package
       @pluginAppId = null
 
     @displayName = @metadata?.displayName || @name
+    ModuleCache.add(@path, @metadata)
     @reset()
     @declaresNewDatabaseObjects = false
 

@@ -30,6 +30,11 @@ const setupConfigDir = (args) => {
   return configDirPath;
 };
 
+const setupCompileCache = (configDirPath) => {
+  const compileCache = require('../compile-cache');
+  return compileCache.setHomeDirectory(configDirPath);
+};
+
 const setupErrorLogger = (args = {}) => {
   const ErrorLogger = require('../error-logger');
   const errorLogger = new ErrorLogger({
@@ -194,6 +199,7 @@ const start = () => {
   global.errorLogger = setupErrorLogger(options);
   const configDirPath = setupConfigDir(options);
   options.configDirPath = configDirPath;
+  setupCompileCache(configDirPath);
 
   const onOpenFileBeforeReady = (event, file) => {
     event.preventDefault();
